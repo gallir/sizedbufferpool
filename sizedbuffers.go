@@ -42,7 +42,11 @@ func (p *SizedBufferPool) Get(s int) []byte {
 	i := p.index(uint(s))
 	v := p.pools[i].Get()
 	if v == nil {
-		return make([]byte, s, p.cap(i))
+		newCap := p.cap(i)
+		if s > newCap {
+			newCap = s
+		}
+		return make([]byte, s, newCap)
 	}
 
 	b := v.([]byte)
