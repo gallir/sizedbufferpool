@@ -61,6 +61,9 @@ func (p *SizedBufferPool) Get(s int) []byte {
 
 // Put stores []bytes in its corresponding bucket
 func (p *SizedBufferPool) Put(b []byte) {
+	if cap(b) == 0 {
+		return
+	}
 	p.pools[p.index(uint(cap(b)))].Put(b)
 }
 
