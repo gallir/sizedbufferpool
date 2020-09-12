@@ -38,16 +38,16 @@ func TestSizedBufferPoolReverse(t *testing.T) {
 
 func test(t *testing.T, p *SizedBufferPool, base uint, s int) {
 	b := p.Get(s)
-	if len(b) != s {
-		t.Errorf("Get() = %d, want %d", len(b), s)
+	if len(b.B) != s {
+		t.Errorf("Get() = %d, want %d", len(b.B), s)
 	}
 
-	if cap(b) < s {
-		t.Errorf("Get() = %d < %d", cap(b), s)
+	if cap(b.B) < s {
+		t.Errorf("Get() = %d < %d", cap(b.B), s)
 	}
 
-	if cap(b) > 2*s+int(base) {
-		t.Errorf("Get() = %d > 2 * %d", cap(b), s)
+	if cap(b.B) > 2*s+int(base) {
+		t.Errorf("Get() = %d > 2 * %d", cap(b.B), s)
 	}
 	p.Put(b)
 

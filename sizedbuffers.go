@@ -12,6 +12,10 @@ type SizedBufferPool struct {
 	n         uint // NUmber of pools
 }
 
+type SizedBuffer struct {
+	B []byte
+}
+
 // New returns a SizedBufferPool. It allows to split []byte in
 // buckets according to its size
 // minSize: the smallest buffer size, for example 4096
@@ -42,7 +46,7 @@ func New(minSize uint, buckets uint) (pool *SizedBufferPool) {
 }
 
 // Get return a []byte of the specified size
-func (p *SizedBufferPool) Get(s int) []byte {
+func (p *SizedBufferPool) Get(s int) *SizedBuffer {
 	i := p.index(uint(s))
 	v := p.pools[i].Get()
 	if v == nil {
@@ -50,12 +54,15 @@ func (p *SizedBufferPool) Get(s int) []byte {
 		if s > newCap {
 			newCap = s
 		}
-		return make([]byte, s, newCap)
+		return &SizedBuffer{
+			B: make([]byte, s, newCap),
+		}
 	}
 
-	b := v.([]byte)
-	if cap(b) >= s {
-		return b[:s]
+	b := v.(*SizedBuffer)
+	if cap(b.B) >= s {
+		b.B = b.B[:s]
+		return b
 	}
 
 	// The size is smaller, return it to the pool and create another one
@@ -64,15 +71,17 @@ func (p *SizedBufferPool) Get(s int) []byte {
 	if s > newCap {
 		newCap = s
 	}
-	return make([]byte, s, newCap)
+	return &SizedBuffer{
+		B: make([]byte, s, newCap),
+	}
 }
 
 // Put stores []bytes in its corresponding bucket
-func (p *SizedBufferPool) Put(b []byte) {
-	if cap(b) == 0 {
+func (p *SizedBufferPool) Put(b *SizedBuffer) {
+	if cap(b.B) == 0 {
 		return
 	}
-	p.pools[p.index(uint(cap(b)))].Put(b)
+	p.pools[p.index(uint(cap(b.B)))].Put(b)
 }
 
 func (p *SizedBufferPool) index(n uint) uint {
