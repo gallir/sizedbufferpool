@@ -4,22 +4,26 @@ import (
 	"sync"
 )
 
+// SizedBufferPool Is the strct to kep the pools for []byte sync.Pool
 type SizedBufferPool struct {
 	pools     []sync.Pool
-	base      uint
-	powerBase uint
-	chunks    uint
+	base      uint // Smallest bucket size
+	powerBase uint // In base 2
+	n         uint // NUmber of pools
 }
 
 // New returns a SizedBufferPool. It allows to split []byte in
 // buckets according to its size
-func New(minSize uint, chunks uint) (pool *SizedBufferPool) {
+// minSize: the smallest buffer size, for example 4096
+// buckets: number of pools for diffferen sizes, each os is twice the size of the previous one
+// Actual example: sizedbufferpool.New(4096, 8)
+func New(minSize uint, buckets uint) (pool *SizedBufferPool) {
 	pool = &SizedBufferPool{}
 	if minSize < 2 {
 		minSize = 2
 	}
-	if chunks < 1 {
-		chunks = 1
+	if buckets < 1 {
+		buckets = 1
 	}
 	pool.base = minSize
 	for minSize > 1 {
@@ -30,8 +34,8 @@ func New(minSize uint, chunks uint) (pool *SizedBufferPool) {
 		pool.powerBase++
 	}
 
-	pool.chunks = chunks
-	pool.pools = make([]sync.Pool, pool.chunks)
+	pool.n = buckets
+	pool.pools = make([]sync.Pool, pool.n)
 
 	return
 
@@ -79,8 +83,8 @@ func (p *SizedBufferPool) index(n uint) uint {
 		n >>= 1
 		idx++
 	}
-	if idx >= p.chunks {
-		return p.chunks - 1
+	if idx >= p.n {
+		return p.n - 1
 	}
 	return idx
 }
